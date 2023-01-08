@@ -75,9 +75,9 @@ namespace xlsxMerge
             if (xlWorkBook != null && b)
             {
                 Excel.Worksheet xlWorkSheetLeft = xlWorkBook.Sheets[cbLeftSheet.SelectedItem.ToString()];
-                numLeftKey.Maximum = xlWorkSheetLeft.UsedRange.Rows.Count;
+                numLeftRow.Maximum = xlWorkSheetLeft.UsedRange.Rows.Count;
                 Excel.Worksheet xlWorkSheetRight = xlWorkBook.Sheets[cbRightSheet.SelectedItem.ToString()];
-                numRightKey.Maximum = xlWorkSheetRight.UsedRange.Rows.Count;
+                numRightRow.Maximum = xlWorkSheetRight.UsedRange.Rows.Count;
             }
         }
 
@@ -137,7 +137,7 @@ namespace xlsxMerge
                 }
                 CSta++;
             }
-            for (int bj = BSta; bj < YRan(B); bj++)
+            for (int bj = BSta; bj < YRan(B) + 1; bj++)
             {
                 if (BMat.Contains(bj)) { continue; }
                 for (int i = 1; i < XRan(B) + 1; i++)
@@ -150,10 +150,11 @@ namespace xlsxMerge
             return C;
         }
 
-        private String GetCell(Excel.Worksheet sheet, int x, int y)
+        private String GetCell(Excel.Worksheet sheet, int x, int y, String ifnull = "__PRESERVE :: CELL_IS_EMPTY")
         {
             var cell = (sheet.Cells[x, y] as Excel.Range).Value;
-            if (cell == null) { return "Null"; }
+            try { if (cell.ToString() == "__PRESERVE :: CELL_IS_EMPTY") { return ""; } } catch { }
+            if (cell == null) { return ifnull; }
             return cell.ToString();
         }
 
@@ -180,7 +181,7 @@ namespace xlsxMerge
                 DataRow df_row = df.NewRow();
                 for (int i = 0; i < XRan(sheet); i++)
                 {
-                    String cell = GetCell(sheet, j + 1, i + 1);
+                    String cell = GetCell(sheet, j + 1, i + 1, "Null");
                     df_row[i] = cell;
                 }
                 Console.WriteLine("<>");

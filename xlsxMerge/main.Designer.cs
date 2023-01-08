@@ -306,6 +306,7 @@ namespace xlsxMerge
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvOutput.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvOutput.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvOutput.ColumnHeadersVisible = false;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
             dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -335,7 +336,7 @@ namespace xlsxMerge
             this.Controls.Add(this.gbLoad);
             this.Controls.Add(this.lblTitle);
             this.Name = "main";
-            this.Text = "xlsxMerge";
+            this.Text = "3333";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.main_FormClosing);
             this.Load += new System.EventHandler(this.Main_Load);
             this.gbLoad.ResumeLayout(false);
