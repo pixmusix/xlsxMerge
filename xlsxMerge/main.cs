@@ -259,8 +259,18 @@ namespace xlsxMerge
 
         private void num_ValueChanged(object sender, EventArgs e)
         {
-            DataTable output = ToDataTable(Merge(xlWorkBook), 0);
-            dgvOutput.DataSource = output;
+            DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
+            dgvOutput.DataSource = dt;
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
+            List<string> lines = new List<string>();
+            EnumerableRowCollection<DataRow> edt = dt.AsEnumerable();
+            EnumerableRowCollection<String> valueLines = edt.Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val}\"")));
+            lines.AddRange(valueLines);
+            File.WriteAllLines(lblWorkbook.Text + "_MERGED.csv", lines);
         }
 
         private void main_FormClosing(object sender, FormClosingEventArgs e)

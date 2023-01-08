@@ -290,12 +290,13 @@ namespace xlsxMerge
             // btnSave
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnSave.Location = new System.Drawing.Point(237, 374);
+            this.btnSave.Location = new System.Drawing.Point(237, 382);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(86, 25);
             this.btnSave.TabIndex = 6;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // dgvOutput
             // 
@@ -319,7 +320,7 @@ namespace xlsxMerge
             this.dgvOutput.Name = "dgvOutput";
             this.dgvOutput.ReadOnly = true;
             this.dgvOutput.RowHeadersVisible = false;
-            this.dgvOutput.Size = new System.Drawing.Size(441, 323);
+            this.dgvOutput.Size = new System.Drawing.Size(436, 331);
             this.dgvOutput.TabIndex = 12;
             // 
             // main
@@ -327,7 +328,7 @@ namespace xlsxMerge
             this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(805, 422);
+            this.ClientSize = new System.Drawing.Size(800, 430);
             this.Controls.Add(this.dgvOutput);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.gbRow);
@@ -335,6 +336,7 @@ namespace xlsxMerge
             this.Controls.Add(this.gbSheets);
             this.Controls.Add(this.gbLoad);
             this.Controls.Add(this.lblTitle);
+            this.MinimumSize = new System.Drawing.Size(700, 450);
             this.Name = "main";
             this.Text = "3333";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.main_FormClosing);
