@@ -51,6 +51,8 @@ namespace xlsxMerge
             this.lblLeftRowNum = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.dgvOutput = new System.Windows.Forms.DataGridView();
+            this.rbToCSV = new System.Windows.Forms.RadioButton();
+            this.rbToXSLX = new System.Windows.Forms.RadioButton();
             this.gbLoad.SuspendLayout();
             this.gbSheets.SuspendLayout();
             this.gbColumn.SuspendLayout();
@@ -290,7 +292,7 @@ namespace xlsxMerge
             // btnSave
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnSave.Location = new System.Drawing.Point(237, 382);
+            this.btnSave.Location = new System.Drawing.Point(236, 371);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(86, 25);
             this.btnSave.TabIndex = 6;
@@ -322,6 +324,32 @@ namespace xlsxMerge
             this.dgvOutput.RowHeadersVisible = false;
             this.dgvOutput.Size = new System.Drawing.Size(436, 331);
             this.dgvOutput.TabIndex = 12;
+            this.dgvOutput.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvOutput_RowsAdded);
+            this.dgvOutput.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dgvOutput_RowsRemoved);
+            // 
+            // rbToCSV
+            // 
+            this.rbToCSV.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.rbToCSV.AutoSize = true;
+            this.rbToCSV.Location = new System.Drawing.Point(60, 375);
+            this.rbToCSV.Name = "rbToCSV";
+            this.rbToCSV.Size = new System.Drawing.Size(62, 17);
+            this.rbToCSV.TabIndex = 13;
+            this.rbToCSV.TabStop = true;
+            this.rbToCSV.Text = "To CSV";
+            this.rbToCSV.UseVisualStyleBackColor = true;
+            // 
+            // rbToXSLX
+            // 
+            this.rbToXSLX.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.rbToXSLX.AutoSize = true;
+            this.rbToXSLX.Location = new System.Drawing.Point(138, 375);
+            this.rbToXSLX.Name = "rbToXSLX";
+            this.rbToXSLX.Size = new System.Drawing.Size(68, 17);
+            this.rbToXSLX.TabIndex = 14;
+            this.rbToXSLX.TabStop = true;
+            this.rbToXSLX.Text = "To XLSX";
+            this.rbToXSLX.UseVisualStyleBackColor = true;
             // 
             // main
             // 
@@ -329,6 +357,8 @@ namespace xlsxMerge
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 430);
+            this.Controls.Add(this.rbToXSLX);
+            this.Controls.Add(this.rbToCSV);
             this.Controls.Add(this.dgvOutput);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.gbRow);
@@ -382,6 +412,8 @@ namespace xlsxMerge
         private System.Windows.Forms.DataGridView dgvOutput;
         private System.Windows.Forms.NumericUpDown numRightKey;
         private System.Windows.Forms.NumericUpDown numLeftKey;
+        private System.Windows.Forms.RadioButton rbToCSV;
+        private System.Windows.Forms.RadioButton rbToXSLX;
     }
 }
 
