@@ -22,8 +22,24 @@ namespace xlsxMerge
         Excel.Application xlOut;
         Excel.Workbook xlOutBook;
 
+        //Define Primary Key Dictionaries
+        Dictionary<String, Int32> Left_PrimaryKeys;
+        Dictionary<String, Int32> Right_PrimaryKeys;
+        List<Int32> Left_DouplicateKeys;
+        List<Int32> Right_DouplicateKeys;
+
+        int dgvRowMax;
+
         public main()
         {
+            // Check if Excel is Installed on this machine and if not terminate.
+            Type officeType = Type.GetTypeFromProgID("Excel.Application");
+            if (officeType == null)
+            {
+                MessageBox.Show("Terminate : Excel Not Installed on this machine.");
+                Environment.Exit(0);
+            }
+
             InitializeComponent();
         }
 
@@ -44,6 +60,9 @@ namespace xlsxMerge
             xlOut.Application.Workbooks.Add();
             xlOutBook = xlOut.Workbooks[1];
             xlOutBook.Worksheets.Add();
+
+            //Set the maximum rows to compute for dgvGridView User Feedback
+            dgvRowMax = 25;
         }
 
         private void InitSheetSelect(Boolean b)
@@ -117,6 +136,64 @@ namespace xlsxMerge
             }
         }
 
+        private void InitOutput()
+        {
+            rbToCSV.Visible = dgvOutput.Rows.Count > 0;
+            rbToXSLX.Visible = dgvOutput.Rows.Count > 0;
+            btnSave.Enabled = dgvOutput.Rows.Count > 0;
+        }
+
+        private void FormatGrid()
+        {
+            if (dgvOutput.Columns.Count > 10)
+            {
+                dgvOutput.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            }
+            else
+            {
+                dgvOutput.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            }
+        }
+
+        private void InitPrimaryKeys()
+        {
+            Left_PrimaryKeys = new Dictionary<String, Int32>();
+            Right_PrimaryKeys = new Dictionary<String, Int32>();
+            Left_DouplicateKeys = new List<Int32>();
+            Right_DouplicateKeys = new List<Int32>();
+
+            int ADex = Convert.ToInt32(numLeftKey.Value);
+            int BDex = Convert.ToInt32(numRightKey.Value);
+            int ASta = Convert.ToInt32(numLeftRow.Value);
+            int BSta = Convert.ToInt32(numRightRow.Value);
+
+            Excel.Worksheet left = xlWorkBook.Sheets[cbLeftSheet.SelectedItem.ToString()];
+            Excel.Worksheet right = xlWorkBook.Sheets[cbRightSheet.SelectedItem.ToString()];
+
+            for (int j = ASta; j < YRan(left) + 1; j++)
+            {
+                try
+                {
+                    Left_PrimaryKeys.Add(GetCell(left, j, ADex), j);
+                }
+                catch (System.ArgumentException)
+                {
+                    Left_DouplicateKeys.Add(j);
+                }
+            }
+            for (int j = BSta; j < YRan(right) + 1; j++)
+            {
+                try
+                {
+                    Right_PrimaryKeys.Add(GetCell(right, j, BDex), j);
+                }
+                catch (System.ArgumentException)
+                {
+                    Right_DouplicateKeys.Add(j);
+                }
+            }
+        }
+
         private Excel.Worksheet Merge(Excel.Workbook book)
         {
             // Get our worksheets from user input
@@ -130,66 +207,82 @@ namespace xlsxMerge
 
         private Excel.Worksheet FullOuterJoin(Excel.Worksheet A, Excel.Worksheet B)
         {
-            // Column Numbers (keys) and Starting row numbers from Users
-            int AKey = Convert.ToInt32(numLeftKey.Value);
-            int BKey = Convert.ToInt32(numRightKey.Value);
-            int ASta = Convert.ToInt32(numLeftRow.Value);
-            int BSta = Convert.ToInt32(numRightRow.Value);
-
-            // A lookup table for matches so we don't double enter
-            List<int> AMat = new List<int>();
-            List<int> BMat = new List<int>();
-
             // Initilaise a new worksheet to populate
             Excel.Worksheet C = xlOutBook.Worksheets[1];
             C.Cells.ClearContents();
             int CSta = 1;
 
-            // Check for B for a match with A using the col numbers provided by uesr.
-            for (int aj = ASta; aj < YRan(A) + 1; aj++)
+            if (Left_PrimaryKeys == null | Right_PrimaryKeys == null)
             {
-                for (int bj = BSta; bj < YRan(B) + 1; bj++)
-                {
-                    if (GetCell(A, aj, AKey) == GetCell(B, bj, BKey))
+                InitPrimaryKeys();
+            }
+
+            foreach (KeyValuePair<string, Int32> A_Entry in Left_PrimaryKeys)
+            {
+                int B_Row;
+                if (Right_PrimaryKeys.TryGetValue(A_Entry.Key, out B_Row)) {
+                    //If we found a match, we populate the row with data from A &B
+                    for (int i = 1; i < XRan(A) + 1; i++)
                     {
-                        // If we found a match, we populate the row with data from A & B
-                        for (int i = 1; i < XRan(A) + 1; i++)
-                        {
-                            String cell = GetCell(A, aj, i);
-                            C.Cells[CSta, i].Value = cell;
-                        }
-                        for (int i = 1; i < XRan(B) + 1; i++)
-                        {
-                            String cell = GetCell(B, bj, i);
-                            C.Cells[CSta, i + XRan(A)].Value = cell;
-                        }
-                        CSta++;
-                        AMat.Add(aj);
-                        BMat.Add(bj);
-                        break;
+                        String cell = GetCell(A, A_Entry.Value, i);
+                        C.Cells[CSta, i].Value = cell;
+                    }
+                    for (int i = 1; i < XRan(B) + 1; i++)
+                    {
+                        String cell = GetCell(B, B_Row, i);
+                        C.Cells[CSta, i + XRan(A)].Value = cell;
+                    }
+                    Right_PrimaryKeys.Remove(A_Entry.Key);
+                }
+                else
+                {
+                    for (int i = 1; i < XRan(A) + 1; i++)
+                    {
+                        String cell = GetCell(A, A_Entry.Value, i);
+                        C.Cells[CSta, i].Value = cell;
                     }
                 }
-            }
-            // Fill rows from A with no neighbour into C
-            for (int aj = ASta; aj < YRan(A) + 1; aj++)
-            {
-                if (AMat.Contains(aj)) { continue; }
-                for (int i = 1; i < XRan(A) + 1; i++)
-                {
-                    String cell = GetCell(A, aj, i);
-                    C.Cells[CSta, i].Value = cell;
-                }
+
+                //next row in worksheet C
                 CSta++;
             }
+
+
             // Fill rows from B with no neighbour into C
-            for (int bj = BSta; bj < YRan(B) + 1; bj++)
+            foreach (KeyValuePair<string, Int32> B_Entry in Right_PrimaryKeys)
             {
-                if (BMat.Contains(bj)) { continue; }
                 for (int i = 1; i < XRan(B) + 1; i++)
                 {
-                    String cell = GetCell(B, bj, i);
+                    String cell = GetCell(B, B_Entry.Value, i);
                     C.Cells[CSta, i + XRan(A)].Value = cell;
                 }
+
+                //next row in worksheet C
+                CSta++;
+            }
+
+            // Fill in Douplicate Keys
+            foreach (Int32 row in Left_DouplicateKeys)
+            {
+                for (int i = 1; i < XRan(A) + 1; i++)
+                {
+                    String cell = GetCell(A, row, i);
+                    C.Cells[CSta, i].Value = cell;
+                }
+
+                //next row in worksheet C
+                CSta++;
+            }
+
+            foreach (Int32 row in Right_DouplicateKeys)
+            {
+                for (int i = 1; i < XRan(B) + 1; i++)
+                {
+                    String cell = GetCell(B, row, i);
+                    C.Cells[CSta, i + XRan(A)].Value = cell;
+                }
+
+                //next row in worksheet C
                 CSta++;
             }
 
@@ -200,12 +293,12 @@ namespace xlsxMerge
         {
             // Get the cell
             var cell = (sheet.Cells[x, y] as Excel.Range).Value;
-            // Preserve blank data (as opposed to empty merged nulls)
-            try { if (cell.ToString() == "__PRESERVE :: CELL_IS_EMPTY") { return ""; } } catch { }
             // check for rows which had not match
             if (cell == null) { return ifnull; }
             // return the value
-            return cell.ToString();
+            String cellValue = cell.ToString();
+            if (cellValue == "__PRESERVE :: CELL_IS_EMPTY") { return ""; }
+            return cellValue;
         }
 
         private int XRan(Excel.Worksheet sheet)
@@ -215,7 +308,15 @@ namespace xlsxMerge
 
         private int YRan(Excel.Worksheet sheet)
         {
-            return sheet.UsedRange.Rows.Count;
+            if (dgvRowMax < sheet.UsedRange.Rows.Count)
+            {
+                return dgvRowMax;
+            }
+            else
+            {
+                return sheet.UsedRange.Rows.Count;
+            }
+            
         }
 
         private DataTable ToDataTable(Excel.Worksheet sheet, int rDex)
@@ -239,6 +340,12 @@ namespace xlsxMerge
                 df.Rows.Add(df_row);
             }
 
+            //Sort by keys
+            int ADex = Convert.ToInt32(numLeftKey.Value);
+            int BDex = Convert.ToInt32(numRightKey.Value);
+            String sortColumn = df.Columns[ADex].ColumnName + " ASC," + df.Columns[BDex].ColumnName + " ASC";
+            df.DefaultView.Sort = sortColumn;
+            df = df.DefaultView.ToTable();
             return df;
         }
 
@@ -321,6 +428,7 @@ namespace xlsxMerge
         private void num_ValueChanged(object sender, EventArgs e)
         {
             //Display Data for user feedback
+            InitPrimaryKeys();
             DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
             dgvOutput.DataSource = dt;
         }
@@ -337,6 +445,10 @@ namespace xlsxMerge
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            //We need to override the rowmax
+            int cache = dgvRowMax;
+            dgvRowMax = int.MaxValue;
+
             if (rbToCSV.Checked) {
                 DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
                 //Save to csv in local directory (Thanks internet).
@@ -360,6 +472,15 @@ namespace xlsxMerge
                 }
                 try { xlOutBook.SaveAs(Environment.CurrentDirectory + "/" + lblWorkbook.Text + "_MERGED.xlsx"); } catch { }
             }
+
+            //restore the rowmax
+            dgvRowMax = cache;
+        }
+
+        private void dgvOutput_DataSourceChanged(object sender, EventArgs e)
+        {
+            InitOutput();
+            FormatGrid();
         }
 
         private void main_FormClosing(object sender, FormClosingEventArgs e)
@@ -374,20 +495,6 @@ namespace xlsxMerge
             try { xlApp.Quit(); } catch (System.NullReferenceException) { }
             ReleaseObject(xlWorkBook);
             ReleaseObject(xlApp);
-        }
-
-        private void dgvOutput_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
-        {
-            rbToCSV.Visible = dgvOutput.Rows.Count > 0;
-            rbToXSLX.Visible = dgvOutput.Rows.Count > 0;
-            btnSave.Enabled = dgvOutput.Rows.Count > 0;
-        }
-
-        private void dgvOutput_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
-        {
-            rbToCSV.Visible = dgvOutput.Rows.Count > 0;
-            rbToXSLX.Visible = dgvOutput.Rows.Count > 0;
-            btnSave.Enabled = dgvOutput.Rows.Count > 0;
         }
     }
 }

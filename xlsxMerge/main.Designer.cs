@@ -324,8 +324,7 @@ namespace xlsxMerge
             this.dgvOutput.RowHeadersVisible = false;
             this.dgvOutput.Size = new System.Drawing.Size(436, 331);
             this.dgvOutput.TabIndex = 12;
-            this.dgvOutput.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvOutput_RowsAdded);
-            this.dgvOutput.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dgvOutput_RowsRemoved);
+            this.dgvOutput.DataSourceChanged += new System.EventHandler(this.dgvOutput_DataSourceChanged);
             // 
             // rbToCSV
             // 
@@ -368,7 +367,7 @@ namespace xlsxMerge
             this.Controls.Add(this.lblTitle);
             this.MinimumSize = new System.Drawing.Size(700, 450);
             this.Name = "main";
-            this.Text = "3333";
+            this.Text = "Excel Merger";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.main_FormClosing);
             this.Load += new System.EventHandler(this.Main_Load);
             this.gbLoad.ResumeLayout(false);
