@@ -29,9 +29,9 @@ namespace xlsxMerge
         List<Int32> Left_DouplicateKeys;
         List<Int32> Right_DouplicateKeys;
 
-        //Define DataTable for user feedback
+        //Define DataTable and boolean for user feedback
         DataTable dataframe;
-        CancellationTokenSource cts;
+        bool workerRequested;
 
         //Define UserInput Globals
         int dgvRowMax;
@@ -72,10 +72,11 @@ namespace xlsxMerge
             xlOut = new Excel.Application();
             xlOut.Application.Workbooks.Add();
             xlOutBook = xlOut.Workbooks[1];
-            xlOutBook.Worksheets.Add();
 
             //Set the maximum rows to compute for dgvGridView User Feedback
             dgvRowMax = 100;
+            //Set the worker request flag
+            workerRequested = false;
         }
 
         private void InitSheetSelect(Boolean b)
@@ -158,7 +159,7 @@ namespace xlsxMerge
 
         private void FormatGrid()
         {
-            if (dgvOutput.Columns.Count > 10)
+            if (dgvOutput.Columns.Count > 6)
             {
                 dgvOutput.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
             }
@@ -168,49 +169,7 @@ namespace xlsxMerge
             }
         }
 
-        private void Feedback()
-        {
-            lblLoading.Invoke((Action)(() => lblLoading.Visible = true));
-            //Display Data for user feedback
-            Excel.Worksheet sheet = xlOutBook.Worksheets.Add();
-            if (!cts.IsCancellationRequested) { InitPrimaryKeys(); }
-            if (!cts.IsCancellationRequested) { sheet = Merge(xlWorkBook); }
-            if (!cts.IsCancellationRequested) { dataframe = ToDataTable(sheet, 0); }
-            if (!cts.IsCancellationRequested)
-            {
-                dgvOutput.Invoke((Action)(() => dgvOutput.DataSource = dataframe));
-                lblLoading.Invoke((Action)(() => lblLoading.Visible = false));
-            } 
-        }
-
-        private void UpdateDataFrame()
-        {
-            //Get data from user input
-            GetNumBoxes();
-
-            // If there's a previous request, cancel it.
-            if (cts != null)
-            {
-                cts.Cancel();
-            }
-
-            // Create a CTS for this request.
-            cts = new CancellationTokenSource();
-
-            // Update data grid view.
-            try
-            {
-                Task rest_dgv = new Task(Feedback, cts.Token);
-                rest_dgv.Start();
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("Operation Cancelled");
-            }
-
-        }
-
-        private void GetNumBoxes()
+        private void GetUserInterface()
         {
             AIndex = Convert.ToInt32(numLeftKey.Value);
             BIndex = Convert.ToInt32(numRightKey.Value);
@@ -398,6 +357,30 @@ namespace xlsxMerge
             return df;
         }
 
+        private void StartWorker()
+        {
+            lblLoading.Text = "Loading Preview...";
+            lblLoading.Visible = true;
+            if (workerFeedback.IsBusy != true)
+            {
+                workerRequested = false;
+                GetUserInterface();
+                workerFeedback.RunWorkerAsync();
+            }
+            else
+            {
+                workerRequested = true;
+            }
+        }
+
+        private void CancelWorker()
+        {
+            if (workerFeedback.WorkerSupportsCancellation == true)
+            {
+                workerFeedback.CancelAsync();
+            }
+        }
+
         private void ReleaseObject(Object obj)
         {
             //Internet told me to do this.
@@ -469,14 +452,48 @@ namespace xlsxMerge
                 InitRowSelect(true);
 
                 //Display data for user feedback
-                UpdateDataFrame();
+                StartWorker();
             }
         }
 
-
         private void num_ValueChanged(object sender, EventArgs e)
         {
-            UpdateDataFrame();
+            if (workerFeedback.IsBusy) {
+                CancelWorker();
+            }
+            StartWorker();
+        }
+
+        private void workerFeedback_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            if (worker.CancellationPending) { e.Cancel = true; } else { InitPrimaryKeys(); }
+            if (worker.CancellationPending) { e.Cancel = true; } else { Merge(xlWorkBook); }
+            if (worker.CancellationPending) { e.Cancel = true; } else { dataframe = ToDataTable(xlOutBook.Worksheets[1], 0); }
+            dgvOutput.Invoke((Action)(() => dgvOutput.DataSource = dataframe));
+        }
+
+        private void workerFeedback_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled == true)
+            {
+                Console.WriteLine("Worker.Canceled!");
+            }
+            else if (e.Error != null)
+            {
+                Console.WriteLine("Worker.ERROR!" + e.Error.Message);
+                lblLoading.Text = "Error: " + e.Error.Message;
+            }
+            else
+            {
+                Console.WriteLine("Worker Completed Successfully! :)");
+                lblLoading.Visible = false;
+            }
+            if (workerRequested)
+            {
+                StartWorker();
+            }
         }
 
         private void rbToXSLX_CheckedChanged(object sender, EventArgs e)
@@ -491,12 +508,19 @@ namespace xlsxMerge
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            this.Cursor = Cursors.WaitCursor;
+
             //We need to override the rowmax
             int cache = dgvRowMax;
             dgvRowMax = int.MaxValue;
 
+            //Keep our globals up to date
+            GetUserInterface();
+            InitPrimaryKeys();
+
             if (rbToCSV.Checked) {
                 DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
+
                 //Save to csv in local directory (Thanks internet).
                 List<string> lines = new List<string>();
                 EnumerableRowCollection<DataRow> edt = dt.AsEnumerable();
@@ -521,6 +545,8 @@ namespace xlsxMerge
 
             //restore the rowmax
             dgvRowMax = cache;
+
+            this.Cursor = Cursors.Default;
         }
 
         private void dgvOutput_DataSourceChanged(object sender, EventArgs e)

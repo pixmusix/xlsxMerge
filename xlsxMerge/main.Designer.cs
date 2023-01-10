@@ -54,6 +54,7 @@ namespace xlsxMerge
             this.rbToCSV = new System.Windows.Forms.RadioButton();
             this.rbToXSLX = new System.Windows.Forms.RadioButton();
             this.lblLoading = new System.Windows.Forms.Label();
+            this.workerFeedback = new System.ComponentModel.BackgroundWorker();
             this.gbLoad.SuspendLayout();
             this.gbSheets.SuspendLayout();
             this.gbColumn.SuspendLayout();
@@ -354,12 +355,20 @@ namespace xlsxMerge
             // lblLoading
             // 
             this.lblLoading.AutoSize = true;
-            this.lblLoading.Location = new System.Drawing.Point(691, 370);
+            this.lblLoading.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.lblLoading.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblLoading.Location = new System.Drawing.Point(650, 371);
             this.lblLoading.Name = "lblLoading";
-            this.lblLoading.Size = new System.Drawing.Size(57, 13);
+            this.lblLoading.Size = new System.Drawing.Size(98, 13);
             this.lblLoading.TabIndex = 15;
-            this.lblLoading.Text = "Loading ...";
+            this.lblLoading.Text = "Loading Preview ...";
             this.lblLoading.Visible = false;
+            // 
+            // workerFeedback
+            // 
+            this.workerFeedback.WorkerSupportsCancellation = true;
+            this.workerFeedback.DoWork += new System.ComponentModel.DoWorkEventHandler(this.workerFeedback_DoWork);
+            this.workerFeedback.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.workerFeedback_RunWorkerCompleted);
             // 
             // main
             // 
@@ -426,6 +435,7 @@ namespace xlsxMerge
         private System.Windows.Forms.RadioButton rbToCSV;
         private System.Windows.Forms.RadioButton rbToXSLX;
         private System.Windows.Forms.Label lblLoading;
+        private System.ComponentModel.BackgroundWorker workerFeedback;
     }
 }
 
