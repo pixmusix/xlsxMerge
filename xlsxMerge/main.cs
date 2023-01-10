@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Windows.Forms;
@@ -28,7 +29,18 @@ namespace xlsxMerge
         List<Int32> Left_DouplicateKeys;
         List<Int32> Right_DouplicateKeys;
 
+        //Define DataTable for user feedback
+        DataTable dataframe;
+        CancellationTokenSource cts;
+
+        //Define UserInput Globals
         int dgvRowMax;
+        int AIndex;
+        int BIndex;
+        int AFirstRow;
+        int BFirstRow;
+        String LeftSheetName;
+        String RightSheetName;
 
         public main()
         {
@@ -50,6 +62,7 @@ namespace xlsxMerge
             InitColumnSelect(false);
             InitRowSelect(false);
 
+            lblLoading.Visible = false;
             rbToCSV.Visible = false;
             rbToXSLX.Visible = false;
             rbToXSLX.Checked = true;
@@ -62,7 +75,7 @@ namespace xlsxMerge
             xlOutBook.Worksheets.Add();
 
             //Set the maximum rows to compute for dgvGridView User Feedback
-            dgvRowMax = 25;
+            dgvRowMax = 100;
         }
 
         private void InitSheetSelect(Boolean b)
@@ -155,6 +168,58 @@ namespace xlsxMerge
             }
         }
 
+        private void Feedback()
+        {
+            lblLoading.Invoke((Action)(() => lblLoading.Visible = true));
+            //Display Data for user feedback
+            Excel.Worksheet sheet = xlOutBook.Worksheets.Add();
+            if (!cts.IsCancellationRequested) { InitPrimaryKeys(); }
+            if (!cts.IsCancellationRequested) { sheet = Merge(xlWorkBook); }
+            if (!cts.IsCancellationRequested) { dataframe = ToDataTable(sheet, 0); }
+            if (!cts.IsCancellationRequested)
+            {
+                dgvOutput.Invoke((Action)(() => dgvOutput.DataSource = dataframe));
+                lblLoading.Invoke((Action)(() => lblLoading.Visible = false));
+            } 
+        }
+
+        private void UpdateDataFrame()
+        {
+            //Get data from user input
+            GetNumBoxes();
+
+            // If there's a previous request, cancel it.
+            if (cts != null)
+            {
+                cts.Cancel();
+            }
+
+            // Create a CTS for this request.
+            cts = new CancellationTokenSource();
+
+            // Update data grid view.
+            try
+            {
+                Task rest_dgv = new Task(Feedback, cts.Token);
+                rest_dgv.Start();
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Operation Cancelled");
+            }
+
+        }
+
+        private void GetNumBoxes()
+        {
+            AIndex = Convert.ToInt32(numLeftKey.Value);
+            BIndex = Convert.ToInt32(numRightKey.Value);
+            AFirstRow = Convert.ToInt32(numLeftRow.Value);
+            BFirstRow = Convert.ToInt32(numRightRow.Value);
+            LeftSheetName = cbLeftSheet.SelectedItem.ToString();
+            RightSheetName = cbRightSheet.SelectedItem.ToString();
+        }
+
         private void InitPrimaryKeys()
         {
             Left_PrimaryKeys = new Dictionary<String, Int32>();
@@ -162,30 +227,25 @@ namespace xlsxMerge
             Left_DouplicateKeys = new List<Int32>();
             Right_DouplicateKeys = new List<Int32>();
 
-            int ADex = Convert.ToInt32(numLeftKey.Value);
-            int BDex = Convert.ToInt32(numRightKey.Value);
-            int ASta = Convert.ToInt32(numLeftRow.Value);
-            int BSta = Convert.ToInt32(numRightRow.Value);
+            Excel.Worksheet left = xlWorkBook.Sheets[LeftSheetName];
+            Excel.Worksheet right = xlWorkBook.Sheets[RightSheetName];
 
-            Excel.Worksheet left = xlWorkBook.Sheets[cbLeftSheet.SelectedItem.ToString()];
-            Excel.Worksheet right = xlWorkBook.Sheets[cbRightSheet.SelectedItem.ToString()];
-
-            for (int j = ASta; j < YRan(left) + 1; j++)
+            for (int j = AFirstRow; j < YRan(left) + 1; j++)
             {
                 try
                 {
-                    Left_PrimaryKeys.Add(GetCell(left, j, ADex), j);
+                    Left_PrimaryKeys.Add(GetCell(left, j, AIndex), j);
                 }
                 catch (System.ArgumentException)
                 {
                     Left_DouplicateKeys.Add(j);
                 }
             }
-            for (int j = BSta; j < YRan(right) + 1; j++)
+            for (int j = BFirstRow; j < YRan(right) + 1; j++)
             {
                 try
                 {
-                    Right_PrimaryKeys.Add(GetCell(right, j, BDex), j);
+                    Right_PrimaryKeys.Add(GetCell(right, j, BIndex), j);
                 }
                 catch (System.ArgumentException)
                 {
@@ -197,8 +257,8 @@ namespace xlsxMerge
         private Excel.Worksheet Merge(Excel.Workbook book)
         {
             // Get our worksheets from user input
-            Excel.Worksheet king = xlWorkBook.Sheets[cbLeftSheet.SelectedItem.ToString()];
-            Excel.Worksheet queen = xlWorkBook.Sheets[cbRightSheet.SelectedItem.ToString()];
+            Excel.Worksheet king = xlWorkBook.Sheets[LeftSheetName];
+            Excel.Worksheet queen = xlWorkBook.Sheets[RightSheetName];
 
             // **Merge!**
             Excel.Worksheet jack = FullOuterJoin(king, queen);
@@ -242,8 +302,6 @@ namespace xlsxMerge
                         C.Cells[CSta, i].Value = cell;
                     }
                 }
-
-                //next row in worksheet C
                 CSta++;
             }
 
@@ -256,8 +314,6 @@ namespace xlsxMerge
                     String cell = GetCell(B, B_Entry.Value, i);
                     C.Cells[CSta, i + XRan(A)].Value = cell;
                 }
-
-                //next row in worksheet C
                 CSta++;
             }
 
@@ -269,11 +325,8 @@ namespace xlsxMerge
                     String cell = GetCell(A, row, i);
                     C.Cells[CSta, i].Value = cell;
                 }
-
-                //next row in worksheet C
                 CSta++;
             }
-
             foreach (Int32 row in Right_DouplicateKeys)
             {
                 for (int i = 1; i < XRan(B) + 1; i++)
@@ -281,8 +334,6 @@ namespace xlsxMerge
                     String cell = GetCell(B, row, i);
                     C.Cells[CSta, i + XRan(A)].Value = cell;
                 }
-
-                //next row in worksheet C
                 CSta++;
             }
 
@@ -340,12 +391,10 @@ namespace xlsxMerge
                 df.Rows.Add(df_row);
             }
 
-            //Sort by keys
-            int ADex = Convert.ToInt32(numLeftKey.Value);
-            int BDex = Convert.ToInt32(numRightKey.Value);
-            String sortColumn = df.Columns[ADex].ColumnName + " ASC," + df.Columns[BDex].ColumnName + " ASC";
-            df.DefaultView.Sort = sortColumn;
-            df = df.DefaultView.ToTable();
+            ////Sort by keys
+            //String sortColumn = df.Columns[AIndex].ColumnName + " ASC," + df.Columns[BIndex].ColumnName + " ASC";
+            //df.DefaultView.Sort = sortColumn;
+            //df = df.DefaultView.ToTable();
             return df;
         }
 
@@ -420,17 +469,14 @@ namespace xlsxMerge
                 InitRowSelect(true);
 
                 //Display data for user feedback
-                DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
-                dgvOutput.DataSource = dt;
+                UpdateDataFrame();
             }
         }
 
+
         private void num_ValueChanged(object sender, EventArgs e)
         {
-            //Display Data for user feedback
-            InitPrimaryKeys();
-            DataTable dt = ToDataTable(Merge(xlWorkBook), 0);
-            dgvOutput.DataSource = dt;
+            UpdateDataFrame();
         }
 
         private void rbToXSLX_CheckedChanged(object sender, EventArgs e)

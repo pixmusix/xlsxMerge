@@ -53,6 +53,7 @@ namespace xlsxMerge
             this.dgvOutput = new System.Windows.Forms.DataGridView();
             this.rbToCSV = new System.Windows.Forms.RadioButton();
             this.rbToXSLX = new System.Windows.Forms.RadioButton();
+            this.lblLoading = new System.Windows.Forms.Label();
             this.gbLoad.SuspendLayout();
             this.gbSheets.SuspendLayout();
             this.gbColumn.SuspendLayout();
@@ -350,12 +351,23 @@ namespace xlsxMerge
             this.rbToXSLX.Text = "To XLSX";
             this.rbToXSLX.UseVisualStyleBackColor = true;
             // 
+            // lblLoading
+            // 
+            this.lblLoading.AutoSize = true;
+            this.lblLoading.Location = new System.Drawing.Point(691, 370);
+            this.lblLoading.Name = "lblLoading";
+            this.lblLoading.Size = new System.Drawing.Size(57, 13);
+            this.lblLoading.TabIndex = 15;
+            this.lblLoading.Text = "Loading ...";
+            this.lblLoading.Visible = false;
+            // 
             // main
             // 
             this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 430);
+            this.Controls.Add(this.lblLoading);
             this.Controls.Add(this.rbToXSLX);
             this.Controls.Add(this.rbToCSV);
             this.Controls.Add(this.dgvOutput);
@@ -413,6 +425,7 @@ namespace xlsxMerge
         private System.Windows.Forms.NumericUpDown numLeftKey;
         private System.Windows.Forms.RadioButton rbToCSV;
         private System.Windows.Forms.RadioButton rbToXSLX;
+        private System.Windows.Forms.Label lblLoading;
     }
 }
 
