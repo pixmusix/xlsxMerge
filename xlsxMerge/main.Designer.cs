@@ -106,7 +106,6 @@ namespace xlsxMerge
             this.lblWorkbook.Size = new System.Drawing.Size(119, 13);
             this.lblWorkbook.TabIndex = 5;
             this.lblWorkbook.Text = "No Workbook Selected";
-            this.lblWorkbook.TextChanged += new System.EventHandler(this.lblWorkbook_TextChanged);
             // 
             // gbSheets
             // 
