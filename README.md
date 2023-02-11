@@ -1,31 +1,21 @@
 # xlsxMerge
-A Simple UI for performing Full Outer Joins on excel spreadsheets perfect for a small business.
+A simple user interface for merging two datasets into one dataset. *xlsxMerge* performs a fast Full Outer Joins on two sheets from an Excel workbook. Perfect for a small buisness!
+
+## When would you use xlsxMerge
+
+*xlsxMerge* is useful when you have two sets of data from different sources which you would like to combine into one Dataset in Excel.
+- For Example: Merging "Supplier PriceList" into your "Inventory" based on a "SKU". 
+- For Example: Merging "User Responses" into your "User Database" based on "UserID". 
+- For Example: Merging "Google Maps Data" into "Local Street Directory" based on "PostCode" 
 
 ## Quick Start
 
 - [Download Microsofts Visual Studio](https://visualstudio.microsoft.com/vs/)
-- Open the solution in Visual Studio and [set the project to release mode](https://learn.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2022)
+- Open the solution in Visual Studio. (The file called "xlsxMerge.sln")
+- [Set the project to release mode](https://learn.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2022)
 - In the menubar, under *Build*, select *Build Solution* (ctl+sft+b)
 - Locate xlsxMerge.exe in your projects director under ./bin/release/
 - Run xlsxMerge.exe
-
-
-## Dependencies
-
-- [Microsoft.Office.Interop.Excel](https://learn.microsoft.com/en-us/dotnet/api/microsoft.office.interop.excel?view=excel-pia)
-
-## User Interface.
-
-![ima](xlsxMergeUI.jpg)
-
-#### Tutorial
-
-1. First click *Load* and select your XLSX file.
-2. In the dropdowns that appear, select which sheets you would like to merge (note, you can select the same sheet twice).
-3. For both sheets, choose which columns you would like to use as primary keys. A key on the left will match with the first instance of the same key on the right. xlsxMerge is greedy and wants an exact match.
-4. For both sheets, give which row you would like to start matching from (inclusive). e.g. If you have row headers in row 1 of your xlsx sheet, you may give row 2 as your starting row (ignoring the header row).
-5. Verify your output in the feedback window to the right.
-6. Click *Save*. This will save your output in your local directory.
 
 ## What is a Full Outer Join
 
@@ -57,8 +47,25 @@ Importantly for small buisness applications a Full Join is lossless, meaning tha
 | UnmatchedLeft  | Bar     | 5         | Null     | Null       |
 | UnmatchedRight | Null    | Null      | Jip      | 12         |
 
+## User Interface.
+
+![ima](xlsxMergeUI.jpg)
+
+#### Tutorial
+
+1. With your data prepared in an excel spreadsheet, save and close the workbook.
+2. Open *xlsxMerge* and click *Load*, then select and open your XLSX file.
+3. In the dropdowns that appear, select which sheets you would like to merge (note, you can select the same sheet twice).
+4. For both sheets, choose which column contains the primary keys for that data, i.e. the values you would like to match up. A key on the left will match with the first instance of the same key on the right. xlsxMerge is greedy and wants an exact match.
+5. For both sheets, give which row you would like to start matching from (inclusive). e.g. If you have row headers in row 1 of your xlsx sheet, you may give row 2 as your starting row (ignoring the header row).
+6. Confirm that you are happy with the result in the feedback window to the right.
+7. Click *Save*. This will save your output in your local directory.
 
 ## Further Reading
 
 - [I strongly suggest learning the =INDEX(MATCH)) Functions in vanilla excel](https://www.youtube.com/watch?v=F264FpBDX28)
-- [See also this excelent python libray for reading and writing in excel](https://openpyxl.readthedocs.io/en/stable/)
+- [See also this excellent python libray for reading and writing in excel](https://openpyxl.readthedocs.io/en/stable/)
+
+## Dependencies
+
+- [Microsoft.Office.Interop.Excel](https://learn.microsoft.com/en-us/dotnet/api/microsoft.office.interop.excel?view=excel-pia)
